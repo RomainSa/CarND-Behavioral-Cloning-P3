@@ -1,4 +1,4 @@
-from shutil import move
+from shutil import move, rmtree
 import socket
 import os
 import numpy as np
@@ -13,31 +13,31 @@ import utils
 import parameters
 
 
-# parameters
+# check if running on local or remote
 if socket.gethostname() == parameters.local_hostname:
     remote = False
 else:
     remote = True
 
-# get data directory
+# get corresponding data directory
 if remote:
     data_folder = parameters.remote_data_folder
-    try:
-        os.mkdir(data_folder, data_folder)
-    except:
-        pass
 else:
     data_folder = parameters.local_data_folder
+if not os.path.isdir(data_folder):
+    os.mkdir(data_folder)
 
-# download data if remote
+# download data if needed
 if remote:
     # Udacity data
-    url_udacity = 'https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip'
-    utils.download_and_unzip(url_udacity, data_folder)
+    utils.download_and_unzip(parameters.url_udacity, data_folder)
     move(data_folder + 'data', data_folder + parameters.udacitydata_folder)
     # collected data
-    url_mydata = 'https://s3-us-west-2.amazonaws.com/carnd-rs/data.zip'
-    utils.download_and_unzip(url_mydata, data_folder)
+    utils.download_and_unzip(parameters.url_mydata, data_folder)
+    try:
+        rmtree(data_folder + parameters.mydata_folder)
+    except:
+        pass
     move(data_folder + 'data', data_folder + parameters.mydata_folder)
 
 # loading data
