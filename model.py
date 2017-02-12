@@ -1,4 +1,3 @@
-from shutil import move, rmtree
 import socket
 import os
 import numpy as np
@@ -6,7 +5,7 @@ from matplotlib import pyplot as plt
 from sklearn.utils import shuffle
 from keras.models import Sequential
 from keras.layers import Lambda
-from keras.layers.core import Dense, Activation, Flatten, Dropout
+from keras.layers.core import Dense, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, Cropping2D
 from keras.optimizers import Adam
 import utils
@@ -27,36 +26,34 @@ else:
 if not os.path.isdir(data_folder):
     os.mkdir(data_folder)
 
-# download data if needed
-if remote:
-    # Udacity data
-    utils.download_and_unzip(parameters.url_udacity, data_folder)
-    move(data_folder + 'data', data_folder + parameters.udacitydata_folder)
-    # collected data
-    utils.download_and_unzip(parameters.url_mydata, data_folder)
-    try:
-        rmtree(data_folder + parameters.mydata_folder)
-    except:
-        pass
-    move(data_folder + 'data', data_folder + parameters.mydata_folder)
+# download data if needed then loads it
+X_list = []
+y_list = []
+paths_list = []
+for destination_folder, url in zip(parameters.data_folders_list, parameters.urls_list):
+    if not os.path.isdir(data_folder + destination_folder):
+        utils.download_and_unzip(url, data_folder, destination_folder)
+    X, y, paths = utils.load_data(data_folder + destination_folder)
+    if destination_folder == 'Recovering_from_left/':
+        # for recovering from left data we only keep right turns
+        paths = paths[y > 0]
+        X = X[y > 0]
+        y = y[y > 0]
+    X_list.append(X)
+    y_list.append(y)
+    paths_list.append(paths)
 
-# loading data
-subfolder0 = ''
-X0, y0, paths0 = utils.load_data(data_folder + parameters.udacitydata_folder + subfolder0)
 
-subfolder1 = 'Smooth_driving/'
-X1, y1, paths1 = utils.load_data(data_folder + parameters.mydata_folder + subfolder1)
 
-subfolder2 = 'Recovering_from_left/'
-X2, y2, paths2 = utils.load_data(data_folder + parameters.mydata_folder + subfolder2)
-paths2 = paths2[y2 > 0]
-X2 = X2[y2 > 0]
-y2 = y2[y2 > 0]
+print(X_list[2].shape)
+print(y_list[2].shape)
+print(paths_list[2].shape)
+
 
 # concatenate data
-X = np.concatenate((X0, X1, X2))
-y = np.concatenate((y0, y1, y2))
-paths = np.concatenate((paths0, paths1, paths2))
+X = np.concatenate(X_list)
+y = np.concatenate(y_list)
+paths = np.concatenate(paths_list)
 
 # right and left cameras angle adjustment
 angle_adjustment = 0.05
@@ -71,13 +68,8 @@ y = np.concatenate((y, -y))
 
 
 # TODO: input augmentation: brightness change
-
-
 # TODO: input augmentation: color change
-
-
 # TODO: input augmentation: distribution adjustment, to have a uniform one
-#plt.hist(y0)
 
 # input shuffle
 X, y = shuffle(X, y)
@@ -90,24 +82,21 @@ based on 'End to End Learning for Self-Driving Cars' by Nvidia
 model = Sequential()
 
 # cropping layer
-model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160, 320, 3)))
+model.add(Cropping2D(cropping=((50, 20), (0, 0)), input_shape=(160, 320, 3)))
 
 # normalization layer
 model.add(Lambda(lambda x: (x / 255.0) - 0.5))
 
 # convolution layers
-model.add(Convolution2D(input_shape=(X.shape[1:]), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
+model.add(Convolution2D(input_shape=(X.shape[1:]), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2),
+                        border_mode='valid'))
 model.add(Dropout(0.50))
-
 model.add(Convolution2D(nb_filter=36, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
 model.add(Dropout(0.50))
-
 model.add(Convolution2D(nb_filter=48, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
 model.add(Dropout(0.50))
-
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
 model.add(Dropout(0.50))
-
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
 model.add(Dropout(0.50))
 
