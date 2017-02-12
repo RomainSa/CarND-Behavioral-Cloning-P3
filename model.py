@@ -1,10 +1,7 @@
 from shutil import move
 import socket
 import os
-import urllib.request
-import zipfile
 import numpy as np
-from PIL import Image
 from matplotlib import pyplot as plt
 from sklearn.utils import shuffle
 from keras.models import Sequential
@@ -12,79 +9,46 @@ from keras.layers import Lambda
 from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, Cropping2D
 from keras.optimizers import Adam
-
-
-def load_data(steering_file, img_paths_prefix=''):
-    paths = np.genfromtxt(steering_file, skip_header=1, dtype='str', delimiter=',')[:, :3].flatten()
-    paths = np.array([img_paths_prefix + p for p in paths])
-    y = np.repeat(np.genfromtxt(steering_file, skip_header=1, dtype=float, delimiter=',')[:, 3], 3)
-    X = load_images(paths)
-    return X, y, paths
-
-
-def load_images(paths):
-    """
-    Loads images given their paths and return a numpy array
-    """
-    X = []
-    for img in paths:
-        X.append(np.asarray(Image.open(img)))
-    X = np.array(X)
-    return X
-
-
-def download_and_unzip(url, folder):
-    filehandle, _ = urllib.request.urlretrieve(url)
-    zip_ref = zipfile.ZipFile(filehandle, 'r')
-    zip_ref.extractall(folder)
-    zip_ref.close()
+import utils
+import parameters
 
 
 # parameters
-if socket.gethostname() == 'MacBook-Pro-de-Romain.local':
+if socket.gethostname() == parameters.local_hostname:
     remote = False
 else:
     remote = True
 
-# make a directory for data
+# get data directory
 if remote:
-    data_folder = '/run/user/1001/data/'
+    data_folder = parameters.remote_data_folder
     try:
         os.mkdir(data_folder, data_folder)
     except:
         pass
 else:
-    data_folder = '/Users/roms/GitHub/SDCND_T1_Simulator/data/'
+    data_folder = parameters.local_data_folder
 
-# download udacity data (if remote)
-udacitydata_folder = 'udacity/'
-mydata_folder = 'mydata/'
+# download data if remote
 if remote:
     # Udacity data
     url_udacity = 'https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip'
-    download_and_unzip(url_udacity, data_folder)
-    move(data_folder + 'data', data_folder + udacitydata_folder)
+    utils.download_and_unzip(url_udacity, data_folder)
+    move(data_folder + 'data', data_folder + parameters.udacitydata_folder)
     # collected data
     url_mydata = 'https://s3-us-west-2.amazonaws.com/carnd-rs/data.zip'
-    download_and_unzip(url_mydata, data_folder)
-    move(data_folder + 'data', data_folder + mydata_folder)
-
-# data paths - normal driving and recovering from side
-images_folder = 'IMG/'
-steering_filename = 'driving_log.csv'
-steering_variables = np.array(['img_center', 'img_left', 'img_right', 'steering_angle', 'throttle', 'brake', 'speed'])
+    utils.download_and_unzip(url_mydata, data_folder)
+    move(data_folder + 'data', data_folder + parameters.mydata_folder)
 
 # loading data
-X0, y0, paths0 = load_data(data_folder + udacitydata_folder + steering_filename,
-                           img_paths_prefix=data_folder + udacitydata_folder)
+subfolder0 = ''
+X0, y0, paths0 = utils.load_data(data_folder + parameters.udacitydata_folder + subfolder0)
 
-subfolder = 'Smooth_driving/'
-X1, y1, paths1 = load_data(data_folder + mydata_folder + subfolder + steering_filename,
-                           img_paths_prefix=data_folder + mydata_folder + subfolder)
+subfolder1 = 'Smooth_driving/'
+X1, y1, paths1 = utils.load_data(data_folder + parameters.mydata_folder + subfolder1)
 
-subfolder = 'Recovering_from_left/'
-X2, y2, paths2 = load_data(data_folder + mydata_folder + subfolder + steering_filename,
-                           img_paths_prefix=data_folder + mydata_folder + subfolder)
+subfolder2 = 'Recovering_from_left/'
+X2, y2, paths2 = utils.load_data(data_folder + parameters.mydata_folder + subfolder2)
 paths2 = paths2[y2 > 0]
 X2 = X2[y2 > 0]
 y2 = y2[y2 > 0]
@@ -96,8 +60,8 @@ paths = np.concatenate((paths0, paths1, paths2))
 
 # right and left cameras angle adjustment
 angle_adjustment = 0.05
-left_images = np.array(['IMG/left_' in p for p in paths])
-right_images = np.array(['IMG/right_' in p for p in paths])
+left_images = np.array([parameters.left_images_pattern in p for p in paths])
+right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
 y[right_images] -= angle_adjustment
 
