@@ -36,7 +36,7 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     X, y, paths = utils.load_data(data_folder + destination_folder)
     if destination_folder == 'Recovering_from_left/':
         # for recovering from left data we only keep sharp right turns
-        min_angle = 0.10
+        min_angle = 0.25
         mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
         paths = paths[mask]
         X = X[mask]
@@ -56,7 +56,7 @@ y_list = None
 paths_list = None
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.05
+angle_adjustment = 0.10
 left_images = np.array([parameters.left_images_pattern in p for p in paths])
 right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
@@ -89,14 +89,23 @@ model.add(Lambda(lambda x: (x / 255.0) - 0.5))
 # convolution layers
 model.add(Convolution2D(input_shape=(X.shape[1:]), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2),
                         border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=36, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=48, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
 
 # fully connected layers
