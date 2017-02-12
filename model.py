@@ -1,3 +1,4 @@
+import os
 import urllib.request
 import zipfile
 import numpy as np
@@ -11,6 +12,14 @@ from keras.layers.convolutional import Convolution2D, Cropping2D
 from keras.optimizers import Adam
 
 
+def load_data(steering_file, img_paths_prefix=''):
+    paths = np.genfromtxt(steering_file, skip_header=1, dtype='str', delimiter=',')[:, :3].flatten()
+    paths = np.array([img_paths_prefix + p for p in paths])
+    y = np.repeat(np.genfromtxt(steering_file, skip_header=1, dtype=float, delimiter=',')[:, 3], 3)
+    X = load_images(paths)
+    return X, y, paths
+
+
 def load_images(paths):
     """
     Loads images given their paths and return a numpy array
@@ -22,28 +31,72 @@ def load_images(paths):
     return X
 
 
-# download udacity data
-url = 'https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip'
-filehandle, _ = urllib.request.urlretrieve(url)
-zip_ref = zipfile.ZipFile(filehandle, 'r')
-zip_ref.extractall('')
-zip_ref.close()
+def download_and_unzip(url, folder):
+    filehandle, _ = urllib.request.urlretrieve(url)
+    zip_ref = zipfile.ZipFile(filehandle, 'r')
+    zip_ref.extractall(folder)
+    zip_ref.close()
+
+
+# parameters
+remote = False
+
+# make a directory for data
+if remote:
+    data_folder = '/run/user/1001/data/'
+    try:
+        os.mkdir(data_folder, data_folder)
+    except:
+        pass
+else:
+    data_folder = '/Users/roms/GitHub/SDCND_T1_Simulator/data/'
+
+# download udacity data (if remote)
+udacitydata_folder = 'udacity/'
+mydata_folder = 'mydata/'
+if remote:
+    # Udacity data
+    url_udacity = 'https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip'
+    download_and_unzip(url_udacity, data_folder)
+    os.rename(data_folder + 'data', data_folder + udacitydata_folder)
+    # collected data
+    url_mydata = 'https://s3-us-west-2.amazonaws.com/carnd-rs/data.zip'
+    download_and_unzip(url_mydata, data_folder)
+    os.rename(data_folder + 'data', data_folder + mydata_folder)
 
 # data paths - normal driving and recovering from side
-data_udacity = 'data/'
 images_folder = 'IMG/'
-steering_file = 'driving_log.csv'
+steering_filename = 'driving_log.csv'
 steering_variables = np.array(['img_center', 'img_left', 'img_right', 'steering_angle', 'throttle', 'brake', 'speed'])
 
 # loading data
-file = data_udacity + steering_file
-paths = np.genfromtxt(file, skip_header=1, dtype='str', delimiter=',')[:, 0]
-prefix = 'data/'
-paths = np.array([prefix + p for p in paths])
-y = np.genfromtxt(file, skip_header=1, dtype=float, delimiter=',')[:, 3]
-X = load_images(paths)
+X0, y0, paths0 = load_data(data_folder + udacitydata_folder + steering_filename,
+                           img_paths_prefix=data_folder + udacitydata_folder)
 
-# input augmentation: horizontal flipping
+subfolder = 'Smooth_driving/'
+X1, y1, paths1 = load_data(data_folder + mydata_folder + subfolder + steering_filename,
+                           img_paths_prefix=data_folder + mydata_folder + subfolder)
+
+subfolder = 'Recovering_from_left/'
+X2, y2, paths2 = load_data(data_folder + mydata_folder + subfolder + steering_filename,
+                           img_paths_prefix=data_folder + mydata_folder + subfolder)
+paths2 = paths2[y2 > 0]
+X2 = X2[y2 > 0]
+y2 = y2[y2 > 0]
+
+# concatenate data
+X = np.concatenate((X0, X1, X2))
+y = np.concatenate((y0, y1, y2))
+paths = np.concatenate((paths0, paths1, paths2))
+
+# right and left cameras angle adjustment
+angle_adjustment = 0.05
+left_images = np.array(['IMG/left_' in p for p in paths])
+right_images = np.array(['IMG/right_' in p for p in paths])
+y[left_images] += angle_adjustment
+y[right_images] -= angle_adjustment
+
+# input augmentation using horizontal flipping
 X = np.concatenate((X, X[:, :, ::-1, :]))
 y = np.concatenate((y, -y))
 
@@ -55,7 +108,7 @@ y = np.concatenate((y, -y))
 
 
 # TODO: input augmentation: distribution adjustment, to have a uniform one
-#plt.hist(y)
+#plt.hist(y0)
 
 # input shuffle
 X, y = shuffle(X, y)
@@ -99,5 +152,5 @@ model.add(Dense(1))
 # compile, train and save the model
 adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
-history = model.fit(X, y, batch_size=32, nb_epoch=10, validation_split=0.2)
+history = model.fit(X, y, batch_size=32, nb_epoch=20, validation_split=0.2)
 model.save('model.h5')
