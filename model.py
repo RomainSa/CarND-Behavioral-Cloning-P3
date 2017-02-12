@@ -8,6 +8,7 @@ from keras.models import Sequential
 from keras.layers import Lambda
 from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, Cropping2D
+from keras.optimizers import Adam
 
 
 def load_images(paths):
@@ -36,8 +37,10 @@ steering_variables = np.array(['img_center', 'img_left', 'img_right', 'steering_
 
 # loading data
 file = data_udacity + steering_file
-paths = np.genfromtxt(file, dtype='str', delimiter=',')[:, 0]
-y = np.genfromtxt(file, dtype=float, delimiter=',')[:, 3]
+paths = np.genfromtxt(file, skip_header=1, dtype='str', delimiter=',')[:, 0]
+prefix = 'data/'
+paths = np.array([prefix + p for p in paths])
+y = np.genfromtxt(file, skip_header=1, dtype=float, delimiter=',')[:, 3]
 X = load_images(paths)
 
 # input augmentation: horizontal flipping
@@ -88,19 +91,13 @@ model.add(Dropout(0.50))
 
 # fully connected layers
 model.add(Flatten())
-
-model.add(Dense(100))
-model.add(Activation('relu'))
-
-model.add(Dense(50))
-model.add(Activation('relu'))
-
-model.add(Dense(10))
-model.add(Activation('relu'))
-
+model.add(Dense(100), activation='relu')
+model.add(Dense(50), activation='relu')
+model.add(Dense(10), activation='relu')
 model.add(Dense(1))
 
 # compile, train and save the model
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-history = model.fit(X, y, batch_size=32, nb_epoch=2, validation_split=0.2)
+adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+model.compile(optimizer=adam_, loss='mean_squared_error')
+history = model.fit(X, y, batch_size=32, nb_epoch=10, validation_split=0.2)
 model.save('model.h5')
