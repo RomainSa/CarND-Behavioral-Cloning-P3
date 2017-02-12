@@ -11,6 +11,7 @@ default_images_folder = 'IMG/'
 
 # file names
 steering_filename = 'driving_log.csv'
+center_images_pattern = 'IMG/center_'
 left_images_pattern = 'IMG/left_'
 right_images_pattern = 'IMG/right_'
 steering_variables = np.array(['img_center', 'img_left', 'img_right', 'steering_angle', 'throttle', 'brake', 'speed'])

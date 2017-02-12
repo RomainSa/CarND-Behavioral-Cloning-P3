@@ -36,10 +36,11 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     X, y, paths = utils.load_data(data_folder + destination_folder)
     if destination_folder == 'Recovering_from_left/':
         # for recovering from left data we only keep sharp right turns
-        min_angle = 0.05
-        paths = paths[y > min_angle]
-        X = X[y > min_angle]
-        y = y[y > min_angle]
+        min_angle = 0.10
+        mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
+        paths = paths[mask]
+        X = X[mask]
+        y = y[mask]
     X_list.append(X)
     y_list.append(y)
     paths_list.append(paths)
@@ -111,5 +112,5 @@ model.add(Dense(1))
 # compile, train and save the model
 adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
-history = model.fit(X, y, batch_size=32, nb_epoch=20, validation_split=0.2)
+history = model.fit(X, y, batch_size=32, nb_epoch=10, validation_split=0.2)
 model.save('model.h5')
