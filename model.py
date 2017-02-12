@@ -1,3 +1,5 @@
+import urllib.request
+import zipfile
 import numpy as np
 from PIL import Image
 from matplotlib import pyplot as plt
@@ -19,37 +21,24 @@ def load_images(paths):
     return X
 
 
+# download udacity data
+url = 'https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip'
+filehandle, _ = urllib.request.urlretrieve(url)
+zip_ref = zipfile.ZipFile(filehandle, 'r')
+zip_ref.extractall('')
+zip_ref.close()
+
 # data paths - normal driving and recovering from side
-data_udacity = '/Users/roms/GitHub/SDCND_T1_Simulator/data/Udacity/'
-data_driving = '/Users/roms/GitHub/SDCND_T1_Simulator/data/Smooth_driving/'
-data_recovering = '/Users/roms/GitHub/SDCND_T1_Simulator/data/Recovering_from_left/'
+data_udacity = 'data/'
 images_folder = 'IMG/'
 steering_file = 'driving_log.csv'
 steering_variables = np.array(['img_center', 'img_left', 'img_right', 'steering_angle', 'throttle', 'brake', 'speed'])
 
 # loading data
-file0 = data_udacity + steering_file
-paths0 = np.genfromtxt(file0, dtype='str', delimiter=',')[:, 0]
-y0 = np.genfromtxt(file0, dtype=float, delimiter=',')[:, 3]
-X0 = load_images(paths0)
-
-file1 = data_driving + steering_file
-paths1 = np.genfromtxt(file1, dtype='str', delimiter=',')[:, 0]
-y1 = np.genfromtxt(file1, dtype=float, delimiter=',')[:, 3]
-X1 = load_images(paths1)
-
-file2 = data_recovering + steering_file
-paths2 = np.genfromtxt(file2, dtype='str', delimiter=',')[:, 0]
-y2 = np.genfromtxt(file2, dtype=float, delimiter=',')[:, 3]
-X2 = load_images(paths1)
-
-# filtering images from recovering data - using only right turns (recovering turns)
-X2 = X2[y2 > 0]
-y2 = y2[y2 > 0]
-
-# data merge
-X = np.concatenate((X0, X1, X2))
-y = np.concatenate((y0, y1, y2))
+file = data_udacity + steering_file
+paths = np.genfromtxt(file, dtype='str', delimiter=',')[:, 0]
+y = np.genfromtxt(file, dtype=float, delimiter=',')[:, 3]
+X = load_images(paths)
 
 # input augmentation: horizontal flipping
 X = np.concatenate((X, X[:, :, ::-1, :]))
