@@ -1,4 +1,5 @@
 from shutil import move
+import socket
 import os
 import urllib.request
 import zipfile
@@ -40,7 +41,10 @@ def download_and_unzip(url, folder):
 
 
 # parameters
-remote = False
+if socket.gethostname() == 'MacBook-Pro-de-Romain.local'
+    remote = False
+else:
+    remote = True
 
 # make a directory for data
 if remote:
