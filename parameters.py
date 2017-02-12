@@ -6,7 +6,7 @@ local_hostname = 'MacBook-Pro-de-Romain.local'
 # folders
 local_data_folder = '/Users/roms/GitHub/SDCND_T1_Simulator/data/'
 remote_data_folder = '/run/user/1001/data/'
-data_folders_list = ['udacity/', 'Smooth_driving/', 'Recovering_from_left/']
+data_folders_list = ['udacity/', 'Smooth_driving2/', 'Recovering_from_left2/']
 default_images_folder = 'IMG/'
 
 # file names
@@ -17,5 +17,5 @@ steering_variables = np.array(['img_center', 'img_left', 'img_right', 'steering_
 
 # urls
 urls_list = ['https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip',
-             'https://s3-us-west-2.amazonaws.com/carnd-rs/data.zip',
-             'https://s3-us-west-2.amazonaws.com/carnd-rs/data.zip']
+             'https://s3-us-west-2.amazonaws.com/carnd-rs/Smooth_driving2.zip',
+             'https://s3-us-west-2.amazonaws.com/carnd-rs/Recovering_from_left2.zip']
