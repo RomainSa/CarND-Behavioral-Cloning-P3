@@ -35,10 +35,11 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
         utils.download_and_unzip(url, data_folder, destination_folder)
     X, y, paths = utils.load_data(data_folder + destination_folder)
     if destination_folder == 'Recovering_from_left/':
-        # for recovering from left data we only keep right turns
-        paths = paths[y > 0]
-        X = X[y > 0]
-        y = y[y > 0]
+        # for recovering from left data we only keep sharp right turns
+        min_angle = 0.05
+        paths = paths[y > min_angle]
+        X = X[y > min_angle]
+        y = y[y > min_angle]
     X_list.append(X)
     y_list.append(y)
     paths_list.append(paths)
@@ -47,6 +48,11 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
 X = np.concatenate(X_list)
 y = np.concatenate(y_list)
 paths = np.concatenate(paths_list)
+
+# empty memory
+X_list = None
+y_list = None
+paths_list = None
 
 # right and left cameras angle adjustment
 angle_adjustment = 0.05
@@ -58,7 +64,6 @@ y[right_images] -= angle_adjustment
 # input augmentation using horizontal flipping
 X = np.concatenate((X, X[:, :, ::-1, :]))
 y = np.concatenate((y, -y))
-
 
 # TODO: input augmentation: brightness change
 # TODO: input augmentation: color change
