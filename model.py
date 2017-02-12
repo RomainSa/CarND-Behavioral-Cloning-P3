@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from sklearn.utils import shuffle
 from keras.models import Sequential
 from keras.layers import Lambda
-from keras.layers.core import Dense, Flatten, Dropout
+from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, Cropping2D
 from keras.optimizers import Adam
 import utils
@@ -42,13 +42,6 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     X_list.append(X)
     y_list.append(y)
     paths_list.append(paths)
-
-
-
-print(X_list[2].shape)
-print(y_list[2].shape)
-print(paths_list[2].shape)
-
 
 # concatenate data
 X = np.concatenate(X_list)
@@ -102,9 +95,12 @@ model.add(Dropout(0.50))
 
 # fully connected layers
 model.add(Flatten())
-model.add(Dense(100), activation='relu')
-model.add(Dense(50), activation='relu')
-model.add(Dense(10), activation='relu')
+model.add(Dense(100))
+model.add(Activation('relu'))
+model.add(Dense(50))
+model.add(Activation('relu'))
+model.add(Dense(10))
+model.add(Activation('relu'))
 model.add(Dense(1))
 
 # compile, train and save the model
