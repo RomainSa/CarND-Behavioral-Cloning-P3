@@ -41,7 +41,7 @@ def download_and_unzip(url, folder):
 
 
 # parameters
-if socket.gethostname() == 'MacBook-Pro-de-Romain.local'
+if socket.gethostname() == 'MacBook-Pro-de-Romain.local':
     remote = False
 else:
     remote = True
