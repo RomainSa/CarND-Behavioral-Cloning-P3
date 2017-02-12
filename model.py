@@ -1,3 +1,4 @@
+from shutil import move
 import os
 import urllib.request
 import zipfile
@@ -58,11 +59,11 @@ if remote:
     # Udacity data
     url_udacity = 'https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip'
     download_and_unzip(url_udacity, data_folder)
-    os.rename(data_folder + 'data', data_folder + udacitydata_folder)
+    move(data_folder + 'data', data_folder + udacitydata_folder)
     # collected data
     url_mydata = 'https://s3-us-west-2.amazonaws.com/carnd-rs/data.zip'
     download_and_unzip(url_mydata, data_folder)
-    os.rename(data_folder + 'data', data_folder + mydata_folder)
+    move(data_folder + 'data', data_folder + mydata_folder)
 
 # data paths - normal driving and recovering from side
 images_folder = 'IMG/'
