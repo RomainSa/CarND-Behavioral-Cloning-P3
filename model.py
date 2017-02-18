@@ -34,9 +34,9 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     if not os.path.isdir(data_folder + destination_folder):
         utils.download_and_unzip(url, data_folder, destination_folder)
     X, y, paths = utils.load_data(data_folder + destination_folder)
-    if destination_folder == 'Recovering_from_left/':
+    if destination_folder == 'Recovering_from_left2/':
         # for recovering from left data we only keep sharp right turns
-        min_angle = 0.10
+        min_angle = 0.15
         mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
         paths = paths[mask]
         X = X[mask]
@@ -62,13 +62,30 @@ right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
 y[right_images] -= angle_adjustment
 
-# input augmentation using horizontal flipping
-X = np.concatenate((X, X[:, :, ::-1, :]))
-y = np.concatenate((y, -y))
+# filters absolute values above 1
+y_min = -1
+y_max = 1
+X = X[(y_min < y) & (y < y_max)]
+y = y[(y_min < y) & (y < y_max)]
+
+# input augmentation using horizontal flipping (on angles <> 0 only)
+mask = (y != 0)
+X = np.concatenate((X, X[mask, :, ::-1, :]))
+y = np.concatenate((y, -y[mask]))
 
 # TODO: input augmentation: brightness change
 # TODO: input augmentation: color change
-# TODO: input augmentation: distribution adjustment, to have a uniform one
+
+# rebalance data distribution (on angles < y_max_rebalance only)
+y_max_rebalance = 0.1
+n_examples_max = y[np.abs(y) > y_max_rebalance].shape[0]
+n_examples = y[np.abs(y) <= y_max_rebalance].shape[0]
+if n_examples > n_examples_max:
+    examples_to_remove = np.random.choice(np.where(np.abs(y) <= y_max_rebalance)[0], n_examples - n_examples_max,
+                                          replace=False)
+    mask = np.array([i for i in range(y.shape[0]) if i not in examples_to_remove])
+    y = y[mask]
+    X = X[mask, :, :, :]
 
 # input shuffle
 X, y = shuffle(X, y)
