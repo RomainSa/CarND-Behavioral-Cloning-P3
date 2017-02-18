@@ -1,13 +1,14 @@
-import socket
-import os
-import numpy as np
-from matplotlib import pyplot as plt
-from sklearn.utils import shuffle
 from keras.models import Sequential
 from keras.layers import Lambda
 from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, Cropping2D
 from keras.optimizers import Adam
+
+import socket
+import os
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy.stats import truncnorm
 import utils
 import parameters
 
@@ -34,8 +35,8 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
         utils.download_and_unzip(url, data_folder, destination_folder)
     _, y, paths = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
-        # for recovering from left data we only keep sharp right turns
-        min_angle = 0.15
+        # for recovering from left data we only keep sharp right turns along with center image
+        min_angle = 0.25
         mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
         paths = paths[mask]
         y = y[mask]
@@ -46,32 +47,27 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
 y = np.concatenate(y_list)
 paths = np.concatenate(paths_list)
 
+# filters zeros
+paths = paths[y != 0]
+y = y[y != 0]
+
 # right and left cameras angle adjustment
-angle_adjustment = 0.05
+angle_adjustment = 0.25
 left_images = np.array([parameters.left_images_pattern in p for p in paths])
 right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
 y[right_images] -= angle_adjustment
 
-# filters absolute values above 1
-y_min = -1
-y_max = 1
-paths = paths[(y_min < y) & (y < y_max)]
-y = y[(y_min < y) & (y < y_max)]
-
-# filters zeros
-paths = paths[y != 0]
-y = y[y != 0]
-
-# load a given number of samples based on the uniform distribution
-n_examples = 10000
-y_target = np.random.uniform(-1, 1, n_examples)
+# load a given number of samples based on the truncated normal distribution
+n_examples = 12500
+scale = 0.5
+y_target = truncnorm.rvs(a=-1/scale, b=1/scale, loc=0, scale=scale, size=n_examples)
 flip = np.random.uniform(0, 1, n_examples) > 0.5
 distances = np.tile(y, n_examples).reshape((n_examples, y.shape[0])) - np.vstack(y_target)
 indexes = np.argmin(np.abs(distances), axis=1)
+distances = None   # to empty memory
 paths = paths[indexes]
 y = y[indexes]
-distances = None   # to empty memory
 
 # load images data
 X = utils.load_images(paths)
