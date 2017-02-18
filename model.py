@@ -27,33 +27,24 @@ if not os.path.isdir(data_folder):
     os.mkdir(data_folder)
 
 # download data if needed then loads it
-X_list = []
 y_list = []
 paths_list = []
 for destination_folder, url in zip(parameters.data_folders_list, parameters.urls_list):
     if not os.path.isdir(data_folder + destination_folder):
         utils.download_and_unzip(url, data_folder, destination_folder)
-    X, y, paths = utils.load_data(data_folder + destination_folder)
+    _, y, paths = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
         # for recovering from left data we only keep sharp right turns
         min_angle = 0.15
         mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
         paths = paths[mask]
-        X = X[mask]
         y = y[mask]
-    X_list.append(X)
     y_list.append(y)
     paths_list.append(paths)
 
 # concatenate data
-X = np.concatenate(X_list)
 y = np.concatenate(y_list)
 paths = np.concatenate(paths_list)
-
-# empty memory
-X_list = None
-y_list = None
-paths_list = None
 
 # right and left cameras angle adjustment
 angle_adjustment = 0.05
@@ -65,30 +56,29 @@ y[right_images] -= angle_adjustment
 # filters absolute values above 1
 y_min = -1
 y_max = 1
-X = X[(y_min < y) & (y < y_max)]
+paths = paths[(y_min < y) & (y < y_max)]
 y = y[(y_min < y) & (y < y_max)]
 
-# input augmentation using horizontal flipping (on angles <> 0 only)
-mask = (y != 0)
-X = np.concatenate((X, X[mask, :, ::-1, :]))
-y = np.concatenate((y, -y[mask]))
+# filters zeros
+paths = paths[y != 0]
+y = y[y != 0]
 
-# TODO: input augmentation: brightness change
-# TODO: input augmentation: color change
+# load a given number of samples based on the uniform distribution
+n_examples = 10000
+y_target = np.random.uniform(-1, 1, n_examples)
+flip = np.random.uniform(0, 1, n_examples) > 0.5
+distances = np.tile(y, n_examples).reshape((n_examples, y.shape[0])) - np.vstack(y_target)
+indexes = np.argmin(np.abs(distances), axis=1)
+paths = paths[indexes]
+y = y[indexes]
+distances = None   # to empty memory
 
-# rebalance data distribution (on angles < y_max_rebalance only)
-y_max_rebalance = 0.1
-n_examples_max = y[np.abs(y) > y_max_rebalance].shape[0]
-n_examples = y[np.abs(y) <= y_max_rebalance].shape[0]
-if n_examples > n_examples_max:
-    examples_to_remove = np.random.choice(np.where(np.abs(y) <= y_max_rebalance)[0], n_examples - n_examples_max,
-                                          replace=False)
-    mask = np.array([i for i in range(y.shape[0]) if i not in examples_to_remove])
-    y = y[mask]
-    X = X[mask, :, :, :]
+# load images data
+X = utils.load_images(paths)
 
-# input shuffle
-X, y = shuffle(X, y)
+# flips some data horizontally
+X = X[flip, :, ::-1, :]
+y[flip] *= -1
 
 
 """
