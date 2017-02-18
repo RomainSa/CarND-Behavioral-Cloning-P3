@@ -6,13 +6,16 @@ from PIL import Image
 import parameters
 
 
-def load_data(data_folder):
+def load_data(data_folder, return_images=True):
     steeringfile_path = data_folder + parameters.steering_filename
     images_paths = np.genfromtxt(steeringfile_path, skip_header=1, dtype='str', delimiter=',')[:, :3].flatten()
     images_paths = np.array([data_folder + p.strip() for p in images_paths])
     y = np.repeat(np.genfromtxt(steeringfile_path, skip_header=1, dtype=float, delimiter=',')[:, 3], 3)
-    X = load_images(images_paths)
-    return X, y, images_paths
+    if return_images:
+        X = load_images(images_paths)
+        return X, y, images_paths
+    else:
+        return None, y, images_paths
 
 
 def load_images(paths):
@@ -21,7 +24,7 @@ def load_images(paths):
     """
     X = []
     for img in paths:
-        X.append(np.asarray(Image.open(img)))
+        X.append(np.asarray(Image.open(img).convert('LA')))
     X = np.array(X)
     return X
 
