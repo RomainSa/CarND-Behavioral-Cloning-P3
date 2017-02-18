@@ -50,10 +50,16 @@ paths = np.concatenate(paths_list)
 
 # right and left cameras angle adjustment
 angle_adjustment = 0.15
-left_images = np.array([parameters.left_images_pattern in p for p in paths])
-right_images = np.array([parameters.right_images_pattern in p for p in paths])
-y[left_images] += angle_adjustment
-y[right_images] -= angle_adjustment
+if angle_adjustment > 0:
+    left_images = np.array([parameters.left_images_pattern in p for p in paths])
+    right_images = np.array([parameters.right_images_pattern in p for p in paths])
+    y[left_images] += angle_adjustment
+    y[right_images] -= angle_adjustment
+else:   # retain only center images
+    center_images = np.array([parameters.center_images_pattern in p for p in paths])
+    paths = paths[center_images]
+    y = y[center_images]
+
 
 # load images data
 X = utils.load_images(paths)
