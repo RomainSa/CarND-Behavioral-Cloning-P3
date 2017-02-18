@@ -9,6 +9,7 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import truncnorm
+from sklearn.utils import shuffle
 import utils
 import parameters
 
@@ -36,7 +37,7 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     _, y, paths = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
         # for recovering from left data we only keep sharp right turns along with center image
-        min_angle = 0.25
+        min_angle = 0.50
         mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
         paths = paths[mask]
         y = y[mask]
@@ -52,31 +53,21 @@ paths = paths[y != 0]
 y = y[y != 0]
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.25
+angle_adjustment = 0.20
 left_images = np.array([parameters.left_images_pattern in p for p in paths])
 right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
 y[right_images] -= angle_adjustment
 
-# load a given number of samples based on the truncated normal distribution
-n_examples = 12500
-scale = 0.5
-y_target = truncnorm.rvs(a=-1/scale, b=1/scale, loc=0, scale=scale, size=n_examples)
-flip = np.random.uniform(0, 1, n_examples) > 0.5
-distances = np.tile(y, n_examples).reshape((n_examples, y.shape[0])) - np.vstack(y_target)
-indexes = np.argmin(np.abs(distances), axis=1)
-distances = None   # to empty memory
-paths = paths[indexes]
-y = y[indexes]
-
 # load images data
 X = utils.load_images(paths)
 
 # flips some data horizontally
-for i, flip_ in enumerate(flip):
-    if flip_:
-        X[i] = X[i, :, ::-1, :]
-y[flip] *= -1
+X = np.concatenate((X, X[:, :, ::-1, :]))
+y = np.concatenate((y, -y))
+
+# shuffle data
+X, y = shuffle(X, y)
 
 
 """
