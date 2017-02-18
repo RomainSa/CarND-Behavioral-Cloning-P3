@@ -37,7 +37,7 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     _, y, paths = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
         # for recovering from left data we only keep sharp right turns along with center image
-        min_angle = 0.50
+        min_angle = 0.25
         mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
         paths = paths[mask]
         y = y[mask]
@@ -59,9 +59,8 @@ y[right_images] -= angle_adjustment
 X = utils.load_images(paths)
 
 # flips some data horizontally
-flip = np.random.choice(range(y.shape[0]), int(y.shape[0]/2), replace=False)
-X[flip] = X[flip, :, ::-1, :]
-y[flip] *= -1
+X = np.concatenate((X, X[:, :, ::-1, :]))
+y = np.concatenate((y, -y))
 
 # shuffle data
 X, y = shuffle(X, y)
