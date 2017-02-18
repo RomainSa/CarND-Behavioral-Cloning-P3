@@ -77,7 +77,9 @@ distances = None   # to empty memory
 X = utils.load_images(paths)
 
 # flips some data horizontally
-X = X[flip, :, ::-1, :]
+for i, flip_ in enumerate(flip):
+    if flip_:
+        X[i] = X[i, :, ::-1, :]
 y[flip] *= -1
 
 
