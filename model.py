@@ -49,7 +49,7 @@ y = np.concatenate(y_list)
 paths = np.concatenate(paths_list)
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.20
+angle_adjustment = 0.15
 left_images = np.array([parameters.left_images_pattern in p for p in paths])
 right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
