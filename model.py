@@ -59,8 +59,9 @@ y[right_images] -= angle_adjustment
 X = utils.load_images(paths)
 
 # flips some data horizontally
-X = np.concatenate((X, X[:, :, ::-1, :]))
-y = np.concatenate((y, -y))
+flip = np.random.choice(range(y.shape[0]), int(y.shape[0]/2), replace=False)
+X[flip] = X[flip, :, ::-1, :]
+y[flip] *= -1
 
 # shuffle data
 X, y = shuffle(X, y)
