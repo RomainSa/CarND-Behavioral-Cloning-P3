@@ -24,7 +24,7 @@ def load_images(paths):
     """
     X = []
     for img in paths:
-        X.append(np.asarray(Image.open(img)))
+        X.append(np.asarray(Image.open(img).convert('YCbCr')))
     X = np.array(X)
     return X
 
