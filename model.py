@@ -48,10 +48,6 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
 y = np.concatenate(y_list)
 paths = np.concatenate(paths_list)
 
-# filters zeros
-paths = paths[y != 0]
-y = y[y != 0]
-
 # right and left cameras angle adjustment
 angle_adjustment = 0.20
 left_images = np.array([parameters.left_images_pattern in p for p in paths])
