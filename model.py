@@ -60,6 +60,13 @@ else:   # retain only center images
     paths = paths[center_images]
     y = y[center_images]
 
+# exclude samples that are too close to 0
+p_samples_to_exclude = 0.50
+if p_samples_to_exclude > 0:
+    zeros_examples = np.where(np.abs(y) < 0.20)[0]
+    samples_to_exclude = np.random.choice(zeros_examples, int(p_samples_to_exclude * zeros_examples.shape[0]), False)
+    indexes = np.array([i for i in range(y.shape[0]) if i not in samples_to_exclude])
+    y = y[indexes]
 
 # load images data
 X = utils.load_images(paths)
@@ -67,15 +74,6 @@ X = utils.load_images(paths)
 # flips some data horizontally
 X = np.concatenate((X, X[:, :, ::-1, :]))
 y = np.concatenate((y, -y))
-
-# exclude samples that are too close to 0
-p_samples_to_exclude = 0.50
-zeros_examples = np.where(np.abs(y) < 0.20)[0]
-samples_to_exclude = np.random.choice(zeros_examples, int(p_samples_to_exclude * zeros_examples.shape[0]), False)
-indexes = np.array([i for i in range(y.shape[0]) if i not in samples_to_exclude])
-X = X[indexes]
-y = y[indexes]
-
 
 # shuffle data
 X, y = shuffle(X, y)
