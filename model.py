@@ -115,7 +115,7 @@ model.add(Activation('relu'))
 model.add(Dense(1))
 
 # compile, train and save the model
-adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+adam_ = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
 history = model.fit(X, y, batch_size=32, nb_epoch=10, validation_split=0.2)
 model.save('model.h5')
