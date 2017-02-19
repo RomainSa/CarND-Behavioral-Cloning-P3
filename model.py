@@ -59,7 +59,7 @@ y = y[speed > min_speed]
 speed = speed[speed > min_speed]
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.15
+angle_adjustment = 0.10
 left_images = np.array([parameters.left_images_pattern in p for p in paths])
 right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
@@ -77,7 +77,7 @@ if p_zeros_samples_to_exclude > 0:
     y = y[indexes]
 
 # exclude samples that are too close to 0
-p_samples_to_exclude = 0.25
+p_samples_to_exclude = 0.20
 if p_samples_to_exclude > 0:
     zeros_examples = np.where(np.abs(y) < 0.30)[0]
     samples_to_exclude = np.random.choice(zeros_examples, int(p_samples_to_exclude * zeros_examples.shape[0]), False)
