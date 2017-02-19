@@ -52,8 +52,14 @@ speed = np.concatenate(speed_list)
 paths = np.concatenate(paths_list)
 y = np.concatenate(y_list)
 
+# remove low speed data
+min_speed = 15
+paths = paths[speed > min_speed]
+y = y[speed > min_speed]
+speed = speed[speed > min_speed]
+
 # right and left cameras angle adjustment
-angle_adjustment = 0.10
+angle_adjustment = 0
 if angle_adjustment > 0:
     left_images = np.array([parameters.left_images_pattern in p for p in paths])
     right_images = np.array([parameters.right_images_pattern in p for p in paths])
@@ -65,8 +71,12 @@ else:   # retain only center images
     paths = paths[center_images]
     y = y[center_images]
 
+# adds random noise to zero data
+mask = (y == 0)
+y[mask] += np.random.uniform(low=0, high=0.01)
+
 # loads samples based on a uniform distribution
-n_examples = 5000
+n_examples = 10000
 y_target = np.random.uniform(low=0., high=0.5, size=n_examples)
 distances = np.tile(np.abs(y), n_examples).reshape((n_examples, y.shape[0])) - np.vstack(y_target)
 indexes = np.argmin(np.abs(distances), axis=1)
