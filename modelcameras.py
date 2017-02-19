@@ -53,7 +53,7 @@ paths = np.concatenate(paths_list)
 y = np.concatenate(y_list)
 
 # right and left cameras angle adjustment
-limit_angle = 0.2
+limit_angle = 0.25
 center = ((np.abs(y) < limit_angle) & (np.array([parameters.center_images_pattern in p for p in paths])))
 left = (y < -limit_angle) & (np.array([parameters.right_images_pattern in p for p in paths]))
 right = (y > limit_angle) & (np.array([parameters.left_images_pattern in p for p in paths]))
@@ -64,7 +64,9 @@ y = y[mask]
 
 # loads samples based on a uniform distribution
 n_examples = 5000
-y_target = np.random.uniform(low=0., high=0.5, size=n_examples)
+scale = 0.25
+max_angle = 0.5
+y_target = truncnorm.rvs(a=-max_angle/scale, b=max_angle/scale, loc=0, scale=scale, size=n_examples)
 distances = np.tile(np.abs(y), n_examples).reshape((n_examples, y.shape[0])) - np.vstack(y_target)
 indexes = np.argmin(np.abs(distances), axis=1)
 flip = y[indexes] * y_target > 0
