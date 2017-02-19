@@ -67,7 +67,7 @@ n_examples = 5000
 scale = 0.25
 max_angle = 0.5
 y_target = truncnorm.rvs(a=-max_angle/scale, b=max_angle/scale, loc=0, scale=scale, size=n_examples)
-distances = np.tile(np.abs(y), n_examples).reshape((n_examples, y.shape[0])) - np.vstack(y_target)
+distances = np.tile(y, n_examples).reshape((n_examples, y.shape[0])) - np.vstack(np.abs(y_target))
 indexes = np.argmin(np.abs(distances), axis=1)
 flip = y[indexes] * y_target > 0
 distances = None   # to empty memory
