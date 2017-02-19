@@ -119,7 +119,6 @@ model.add(Dropout(0.50))
 model.add(Convolution2D(nb_filter=48, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
 model.add(Dropout(0.50))
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
-model.add(Dropout(0.50))
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
 
 # fully connected layers
