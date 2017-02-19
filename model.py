@@ -29,27 +29,31 @@ if not os.path.isdir(data_folder):
     os.mkdir(data_folder)
 
 # download data if needed then loads it
-y_list = []
+speed_list = []
 paths_list = []
+y_list = []
 for destination_folder, url in zip(parameters.data_folders_list, parameters.urls_list):
     if not os.path.isdir(data_folder + destination_folder):
         utils.download_and_unzip(url, data_folder, destination_folder)
-    _, y, paths = utils.load_data(data_folder + destination_folder, return_images=False)
+    _, y, paths, speed = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
-        # for recovering from left data we only keep sharp right turns along with center image
-        min_angle = 0.25
-        mask = (y > min_angle) & np.array([parameters.center_images_pattern in p for p in paths])
+        # for recovering from left data we only keep sharp right turns (center and left images)
+        min_angle = 0.1
+        mask = (y > min_angle) & np.array([parameters.right_images_pattern not in p for p in paths])
+        speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
-    y_list.append(y)
+    speed_list.append(speed)
     paths_list.append(paths)
+    y_list.append(y)
 
 # concatenate data
-y = np.concatenate(y_list)
+speed = np.concatenate(speed_list)
 paths = np.concatenate(paths_list)
+y = np.concatenate(y_list)
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.15
+angle_adjustment = 0.25
 if angle_adjustment > 0:
     left_images = np.array([parameters.left_images_pattern in p for p in paths])
     right_images = np.array([parameters.right_images_pattern in p for p in paths])
@@ -57,15 +61,29 @@ if angle_adjustment > 0:
     y[right_images] -= angle_adjustment
 else:   # retain only center images
     center_images = np.array([parameters.center_images_pattern in p for p in paths])
+    speed = speed[center_images]
     paths = paths[center_images]
     y = y[center_images]
+
+# exclude samples that are exactly 0
+p_zeros_samples_to_exclude = 0.75
+if p_zeros_samples_to_exclude > 0:
+    zeros_examples = np.unique(np.concatenate((np.where(np.abs(y) == 0)[0],
+                                               np.where(np.abs(y) == angle_adjustment)[0])))
+    zeros_samples_to_exclude = np.random.choice(zeros_examples, int(p_zeros_samples_to_exclude * zeros_examples.shape[0]), False)
+    indexes = np.array([i for i in range(y.shape[0]) if i not in zeros_samples_to_exclude])
+    speed = speed[indexes]
+    paths = paths[indexes]
+    y = y[indexes]
 
 # exclude samples that are too close to 0
 p_samples_to_exclude = 0.50
 if p_samples_to_exclude > 0:
-    zeros_examples = np.where(np.abs(y) < 0.20)[0]
+    zeros_examples = np.where(np.abs(y) < 0.30)[0]
     samples_to_exclude = np.random.choice(zeros_examples, int(p_samples_to_exclude * zeros_examples.shape[0]), False)
     indexes = np.array([i for i in range(y.shape[0]) if i not in samples_to_exclude])
+    speed = speed[indexes]
+    paths = paths[indexes]
     y = y[indexes]
 
 # load images data
