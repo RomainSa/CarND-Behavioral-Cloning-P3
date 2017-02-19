@@ -38,11 +38,16 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     _, y, paths, speed = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
         # for recovering from left data we only keep sharp right turns (center and left images)
-        min_angle = 0.05
+        min_angle = 0.10
         mask = (y > min_angle)
         speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
+    side_adjustment = 0.10
+    if destination_folder == 'Left_side_driving/':
+        y += side_adjustment
+    if destination_folder == 'Right_side_driving/':
+        y -= side_adjustment
     speed_list.append(speed)
     paths_list.append(paths)
     y_list.append(y)
@@ -53,25 +58,40 @@ paths = np.concatenate(paths_list)
 y = np.concatenate(y_list)
 
 # remove low speed data
-min_speed = 15
-paths = paths[speed > min_speed]
-y = y[speed > min_speed]
-speed = speed[speed > min_speed]
+min_speed = 20
+mask = speed > min_speed
+paths = paths[mask]
+y = y[mask]
+speed = speed[mask]
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.10
+angle_adjustment = 0.05
 left_images = np.array([parameters.left_images_pattern in p for p in paths])
 right_images = np.array([parameters.right_images_pattern in p for p in paths])
 y[left_images] += angle_adjustment
 y[right_images] -= angle_adjustment
 
-# exclude samples that are exactly 0
+# flips some data horizontally
+mask = (y != 0)
+speed = np.concatenate((speed, speed[mask]))
+paths = np.concatenate((paths, paths[mask]))
+flip = np.concatenate((np.repeat(False, y.shape[0]), np.repeat(True, mask.sum())))
+y = np.concatenate((y, -y[mask]))
+
+# exclude samples that are exactly or near 0
 p_zeros_samples_to_exclude = 0.50
-if p_zeros_samples_to_exclude > 0:
+p_near_zeros_samples_to_exclude = 0.50
+if p_zeros_samples_to_exclude > 0 or p_near_zeros_samples_to_exclude:
+    near_zeros_examples = np.where((np.abs(y) < 0.2) & (np.abs(y) > 0))[0]
     zeros_examples = np.unique(np.concatenate((np.where(y == 0)[0],
                                                np.where(np.abs(y) == angle_adjustment)[0])))
-    zeros_samples_to_exclude = np.random.choice(zeros_examples, int(p_zeros_samples_to_exclude * zeros_examples.shape[0]), False)
-    indexes = np.array([i for i in range(y.shape[0]) if i not in zeros_samples_to_exclude])
+    near_zeros_samples_to_exclude = np.random.choice(near_zeros_examples,
+                                                     int(p_near_zeros_samples_to_exclude * near_zeros_examples.shape[0]),
+                                                     False)
+    zeros_samples_to_exclude = np.random.choice(zeros_examples,
+                                                int(p_zeros_samples_to_exclude * zeros_examples.shape[0]),
+                                                False)
+    indexes = np.array([i for i in range(y.shape[0]) if (i not in zeros_samples_to_exclude and i not in near_zeros_samples_to_exclude)])
     speed = speed[indexes]
     paths = paths[indexes]
     y = y[indexes]
@@ -79,10 +99,8 @@ if p_zeros_samples_to_exclude > 0:
 # load images data
 X = utils.load_images(paths)
 
-# flips some data horizontally
-mask = (y != 0)
-X = np.concatenate((X, X[mask][:, :, ::-1, :]))
-y = np.concatenate((y, -y[mask]))
+# flips it if needed
+X[flip] = X[flip][:, :, ::-1, :]
 
 # shuffle data
 X, y = shuffle(X, y)
