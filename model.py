@@ -38,8 +38,8 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     _, y, paths, speed = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
         # for recovering from left data we only keep sharp right turns (center and left images)
-        min_angle = 0.1
-        mask = (y > min_angle) & np.array([parameters.right_images_pattern not in p for p in paths])
+        min_angle = 0.25
+        mask = (y > min_angle) & np.array([parameters.left_images_pattern in p for p in paths])
         speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
@@ -52,21 +52,21 @@ speed = np.concatenate(speed_list)
 paths = np.concatenate(paths_list)
 y = np.concatenate(y_list)
 
+# remove low speed data
+min_speed = 15
+paths = paths[speed > min_speed]
+y = y[speed > min_speed]
+speed = speed[speed > min_speed]
+
 # right and left cameras angle adjustment
-angle_adjustment = 0.25
-if angle_adjustment > 0:
-    left_images = np.array([parameters.left_images_pattern in p for p in paths])
-    right_images = np.array([parameters.right_images_pattern in p for p in paths])
-    y[left_images] += angle_adjustment
-    y[right_images] -= angle_adjustment
-else:   # retain only center images
-    center_images = np.array([parameters.center_images_pattern in p for p in paths])
-    speed = speed[center_images]
-    paths = paths[center_images]
-    y = y[center_images]
+angle_adjustment = 0.15
+left_images = np.array([parameters.left_images_pattern in p for p in paths])
+right_images = np.array([parameters.right_images_pattern in p for p in paths])
+y[left_images] += angle_adjustment
+y[right_images] -= angle_adjustment
 
 # exclude samples that are exactly 0
-p_zeros_samples_to_exclude = 0.75
+p_zeros_samples_to_exclude = 0.90
 if p_zeros_samples_to_exclude > 0:
     zeros_examples = np.unique(np.concatenate((np.where(np.abs(y) == 0)[0],
                                                np.where(np.abs(y) == angle_adjustment)[0])))
@@ -90,8 +90,9 @@ if p_samples_to_exclude > 0:
 X = utils.load_images(paths)
 
 # flips some data horizontally
-X = np.concatenate((X, X[:, :, ::-1, :]))
-y = np.concatenate((y, -y))
+mask = (y != 0)
+X = np.concatenate((X, X[mask][:, :, ::-1, :]))
+y = np.concatenate((y, -y[mask]))
 
 # shuffle data
 X, y = shuffle(X, y)
@@ -120,7 +121,6 @@ model.add(Dropout(0.50))
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
 model.add(Dropout(0.50))
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
-model.add(Dropout(0.50))
 
 # fully connected layers
 model.add(Flatten())
@@ -135,5 +135,5 @@ model.add(Dense(1))
 # compile, train and save the model
 adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
-history = model.fit(X, y, batch_size=32, nb_epoch=10, validation_split=0.2)
+history = model.fit(X, y, batch_size=64, nb_epoch=5, validation_split=0.2)
 model.save('model.h5')
