@@ -75,9 +75,6 @@ def load_images(paths):
         # random brightness change
         brightness_change = np.random.randint(-50, +50)
         x = change_brightness(x, brightness_change)
-        # random vertical shift
-        vertical_shift = np.random.randint(-25, +25)
-        x = shift_image_vertically(x, vertical_shift)
         X.append(x)
     X = np.array(X)
     return X
