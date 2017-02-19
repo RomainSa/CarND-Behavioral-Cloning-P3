@@ -36,17 +36,17 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     if not os.path.isdir(data_folder + destination_folder):
         utils.download_and_unzip(url, data_folder, destination_folder)
     _, y, paths, speed = utils.load_data(data_folder + destination_folder, return_images=False)
-    if destination_folder == 'Recovering_from_left2/':
+    if 'recovering_from_left' in destination_folder.lower():
         # for recovering from left data we only keep sharp right turns (center and left images)
         min_angle = 0.10
         mask = (y > min_angle)
         speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
-    side_adjustment = 0.15
-    if destination_folder == 'Left_side_driving/':
+    side_adjustment = 0.20
+    if 'left_side_driving' in destination_folder.lower():
         y += side_adjustment
-    if destination_folder == 'Right_side_driving/':
+    if 'right_side_driving' in destination_folder.lower():
         y -= side_adjustment
     speed_list.append(speed)
     paths_list.append(paths)
@@ -65,7 +65,7 @@ y = y[mask]
 speed = speed[mask]
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.05
+angle_adjustment = 0
 if angle_adjustment > 0:
     left_images = np.array([parameters.left_images_pattern in p for p in paths])
     right_images = np.array([parameters.right_images_pattern in p for p in paths])
