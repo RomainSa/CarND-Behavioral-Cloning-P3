@@ -38,8 +38,8 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     _, y, paths, speed = utils.load_data(data_folder + destination_folder, return_images=False)
     if destination_folder == 'Recovering_from_left2/':
         # for recovering from left data we only keep sharp right turns (center and left images)
-        min_angle = 0.25
-        mask = (y > min_angle) & np.array([parameters.left_images_pattern in p for p in paths])
+        min_angle = 0.05
+        mask = (y > min_angle)
         speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
@@ -66,22 +66,12 @@ y[left_images] += angle_adjustment
 y[right_images] -= angle_adjustment
 
 # exclude samples that are exactly 0
-p_zeros_samples_to_exclude = 0.80
+p_zeros_samples_to_exclude = 0.50
 if p_zeros_samples_to_exclude > 0:
-    zeros_examples = np.unique(np.concatenate((np.where(np.abs(y) == 0)[0],
+    zeros_examples = np.unique(np.concatenate((np.where(y == 0)[0],
                                                np.where(np.abs(y) == angle_adjustment)[0])))
     zeros_samples_to_exclude = np.random.choice(zeros_examples, int(p_zeros_samples_to_exclude * zeros_examples.shape[0]), False)
     indexes = np.array([i for i in range(y.shape[0]) if i not in zeros_samples_to_exclude])
-    speed = speed[indexes]
-    paths = paths[indexes]
-    y = y[indexes]
-
-# exclude samples that are too close to 0
-p_samples_to_exclude = 0.20
-if p_samples_to_exclude > 0:
-    zeros_examples = np.where(np.abs(y) < 0.30)[0]
-    samples_to_exclude = np.random.choice(zeros_examples, int(p_samples_to_exclude * zeros_examples.shape[0]), False)
-    indexes = np.array([i for i in range(y.shape[0]) if i not in samples_to_exclude])
     speed = speed[indexes]
     paths = paths[indexes]
     y = y[indexes]
