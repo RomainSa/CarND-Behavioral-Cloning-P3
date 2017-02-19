@@ -43,7 +43,7 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
         speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
-    side_adjustment = 0.10
+    side_adjustment = 0.15
     if destination_folder == 'Left_side_driving/':
         y += side_adjustment
     if destination_folder == 'Right_side_driving/':
@@ -101,6 +101,7 @@ if p_zeros_samples_to_exclude > 0 or p_near_zeros_samples_to_exclude:
     speed = speed[indexes]
     paths = paths[indexes]
     y = y[indexes]
+    flip = flip[indexes]
 
 # load images data
 X = utils.load_images(paths)
