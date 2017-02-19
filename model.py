@@ -43,7 +43,7 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
         speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
-    side_adjustment = 0.20
+    side_adjustment = 0.15
     if 'left_side_driving' in destination_folder.lower():
         y += side_adjustment
     if 'right_side_driving' in destination_folder.lower():
@@ -65,7 +65,7 @@ y = y[mask]
 speed = speed[mask]
 
 # right and left cameras angle adjustment
-angle_adjustment = 0
+angle_adjustment = 0.075
 if angle_adjustment > 0:
     left_images = np.array([parameters.left_images_pattern in p for p in paths])
     right_images = np.array([parameters.right_images_pattern in p for p in paths])
@@ -85,10 +85,10 @@ flip = np.concatenate((np.repeat(False, y.shape[0]), np.repeat(True, mask.sum())
 y = np.concatenate((y, -y[mask]))
 
 # exclude samples that are exactly or near 0
-p_zeros_samples_to_exclude = 0.50
-p_near_zeros_samples_to_exclude = 0.50
+p_zeros_samples_to_exclude = 0.75
+p_near_zeros_samples_to_exclude = 0.75
 if p_zeros_samples_to_exclude > 0 or p_near_zeros_samples_to_exclude:
-    near_zeros_examples = np.where((np.abs(y) < 0.2) & (np.abs(y) > 0))[0]
+    near_zeros_examples = np.where((np.abs(y) < 0.30) & (np.abs(y) > 0))[0]
     zeros_examples = np.unique(np.concatenate((np.where(y == 0)[0],
                                                np.where(np.abs(y) == angle_adjustment)[0])))
     near_zeros_samples_to_exclude = np.random.choice(near_zeros_examples,
@@ -149,5 +149,5 @@ model.add(Dense(1))
 # compile, train and save the model
 adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
-history = model.fit(X, y, batch_size=64, nb_epoch=5, validation_split=0.2)
-model.save('model.h5')
+history = model.fit(X, y, batch_size=64, nb_epoch=10, validation_split=0.2)
+model.save('model8.h5')
