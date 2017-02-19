@@ -66,7 +66,7 @@ y[left_images] += angle_adjustment
 y[right_images] -= angle_adjustment
 
 # exclude samples that are exactly 0
-p_zeros_samples_to_exclude = 0.90
+p_zeros_samples_to_exclude = 0.80
 if p_zeros_samples_to_exclude > 0:
     zeros_examples = np.unique(np.concatenate((np.where(np.abs(y) == 0)[0],
                                                np.where(np.abs(y) == angle_adjustment)[0])))
@@ -77,7 +77,7 @@ if p_zeros_samples_to_exclude > 0:
     y = y[indexes]
 
 # exclude samples that are too close to 0
-p_samples_to_exclude = 0.50
+p_samples_to_exclude = 0.25
 if p_samples_to_exclude > 0:
     zeros_examples = np.where(np.abs(y) < 0.30)[0]
     samples_to_exclude = np.random.choice(zeros_examples, int(p_samples_to_exclude * zeros_examples.shape[0]), False)
