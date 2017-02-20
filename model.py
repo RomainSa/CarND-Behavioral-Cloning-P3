@@ -120,7 +120,7 @@ based on 'End to End Learning for Self-Driving Cars' by Nvidia
 model = Sequential()
 
 # cropping layer
-model.add(Cropping2D(cropping=((50, 20), (0, 0)), input_shape=(160, 320, 3)))
+model.add(Cropping2D(cropping=((60, 25), (0, 0)), input_shape=(160, 320, 3)))
 
 # normalization layer
 model.add(Lambda(lambda x: (x / 255.0) - 0.5))
