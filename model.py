@@ -4,6 +4,7 @@ from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, Cropping2D
 from keras.optimizers import Adam
 
+import sys
 import socket
 import os
 import numpy as np
@@ -18,6 +19,12 @@ side_adjustment = 0.15
 angle_adjustment = 0.075
 p_zeros_samples_to_exclude = 0.75
 p_near_zeros_samples_to_exclude = 0.75
+args = sys.argv
+if len(args) == 5:
+    side_adjustment = args[1]
+    angle_adjustment = args[2]
+    p_zeros_samples_to_exclude = args[3]
+    p_near_zeros_samples_to_exclude = args[4]
 
 # check if running on local or remote
 if socket.gethostname() == parameters.local_hostname:
