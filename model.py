@@ -13,6 +13,11 @@ from sklearn.utils import shuffle
 import utils
 import parameters
 
+# hyperparameters
+side_adjustment = 0.15
+angle_adjustment = 0.075
+p_zeros_samples_to_exclude = 0.75
+p_near_zeros_samples_to_exclude = 0.75
 
 # check if running on local or remote
 if socket.gethostname() == parameters.local_hostname:
@@ -43,7 +48,6 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
         speed = speed[mask]
         paths = paths[mask]
         y = y[mask]
-    side_adjustment = 0.15
     if 'left_side_driving' in destination_folder.lower():
         y += side_adjustment
     if 'right_side_driving' in destination_folder.lower():
@@ -65,7 +69,6 @@ y = y[mask]
 speed = speed[mask]
 
 # right and left cameras angle adjustment
-angle_adjustment = 0.075
 if angle_adjustment > 0:
     left_images = np.array([parameters.left_images_pattern in p for p in paths])
     right_images = np.array([parameters.right_images_pattern in p for p in paths])
@@ -85,8 +88,6 @@ flip = np.concatenate((np.repeat(False, y.shape[0]), np.repeat(True, mask.sum())
 y = np.concatenate((y, -y[mask]))
 
 # exclude samples that are exactly or near 0
-p_zeros_samples_to_exclude = 0.75
-p_near_zeros_samples_to_exclude = 0.75
 if p_zeros_samples_to_exclude > 0 or p_near_zeros_samples_to_exclude:
     near_zeros_examples = np.where((np.abs(y) < 0.30) & (np.abs(y) > 0))[0]
     zeros_examples = np.unique(np.concatenate((np.where(y == 0)[0],
@@ -175,5 +176,6 @@ adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
 history = model.fit(X, y, batch_size=64, nb_epoch=10, validation_split=0.2)
 evaluation = model.evaluate(X_test, y_test)
-print('Test MSE: {}'.format(evaluation))
-model.save('model.h5')
+print('\nTest MSE: {}\n'.format(evaluation))
+model_name = 'model_SA' + str(side_adjustment) + '_AA' + str(angle_adjustment) + '_Z' + str(p_zeros_samples_to_exclude) + '_NZ' + str(p_near_zeros_samples_to_exclude)
+model.save(model_name)
