@@ -6,7 +6,7 @@ local_hostname = 'MacBook-Pro-de-Romain.local'
 # folders
 local_data_folder = '/Users/roms/GitHub/SDCND_T1_Simulator/data/'
 remote_data_folder = '/home/carnd//data/'
-data_folders_list = ['udacity/',  'Left_side_driving2/', 'Right_side_driving2/']
+data_folders_list = ['Smooth_driving3/',  'Left_side_driving2/', 'Right_side_driving2/']
 default_images_folder = 'IMG/'
 
 # file names
