@@ -2,6 +2,7 @@ from keras.models import Sequential
 from keras.layers import Lambda
 from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, Cropping2D
+from keras.layers.advanced_activations import ELU
 from keras.optimizers import Adam
 
 import sys
@@ -17,7 +18,7 @@ import parameters
 # hyperparameters
 side_adjustment = 0.15
 angle_adjustment = 0.075
-p_zeros_samples_to_exclude = 0.75
+p_zeros_samples_to_exclude = 0.9
 p_near_zeros_samples_to_exclude = 0.75
 args = sys.argv
 if len(args) == 5:
@@ -144,37 +145,45 @@ model.add(Lambda(lambda x: (x / 255.0) - 0.5))
 # convolution layers
 model.add(Convolution2D(input_shape=(X.shape[1:]), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2),
                         border_mode='valid'))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 model.add(Dropout(0.50))
 
 model.add(Convolution2D(nb_filter=36, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 model.add(Dropout(0.50))
 
 model.add(Convolution2D(nb_filter=48, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 model.add(Dropout(0.50))
 
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 model.add(Dropout(0.50))
 
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 model.add(Dropout(0.50))
 
 # fully connected layers
 model.add(Flatten())
 model.add(Dense(100))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 model.add(Dropout(0.50))
 
 model.add(Dense(50))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 model.add(Dropout(0.50))
 
 model.add(Dense(10))
-model.add(Activation('relu'))
+elu = ELU()
+model.add(elu)
 
 model.add(Dense(1))
 
