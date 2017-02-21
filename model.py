@@ -112,6 +112,9 @@ X[flip] = X[flip][:, :, ::-1, :]
 # shuffle data
 X, y = shuffle(X, y)
 
+# test data
+X_test, y_test, paths_test, speed_test = utils.load_data(data_folder + 'track2/', return_images=True)
+
 
 """
 based on 'End to End Learning for Self-Driving Cars' by Nvidia
@@ -128,26 +131,43 @@ model.add(Lambda(lambda x: (x / 255.0) - 0.5))
 # convolution layers
 model.add(Convolution2D(input_shape=(X.shape[1:]), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2),
                         border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=36, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=48, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
+model.add(Activation('relu'))
 model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
+model.add(Activation('relu'))
+model.add(Dropout(0.50))
+
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
+model.add(Activation('relu'))
+model.add(Dropout(0.50))
 
 # fully connected layers
 model.add(Flatten())
 model.add(Dense(100))
 model.add(Activation('relu'))
+model.add(Dropout(0.50))
+
 model.add(Dense(50))
 model.add(Activation('relu'))
+model.add(Dropout(0.50))
+
 model.add(Dense(10))
 model.add(Activation('relu'))
+
 model.add(Dense(1))
 
 # compile, train and save the model
 adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
 history = model.fit(X, y, batch_size=64, nb_epoch=10, validation_split=0.2)
-model.save('model8.h5')
+model.evaluate(X_test, y_test)
+model.save('model.h5')
