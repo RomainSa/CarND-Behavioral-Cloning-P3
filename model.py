@@ -114,6 +114,11 @@ X, y = shuffle(X, y)
 
 # test data
 X_test, y_test, paths_test, speed_test = utils.load_data(data_folder + 'track2/', return_images=True)
+mask = np.array([parameters.center_images_pattern in p for p in paths_test])
+X_test = X_test[mask]
+y_test = y_test[mask]
+paths_test = paths_test[mask]
+speed_test = speed_test[mask]
 
 
 """
@@ -169,5 +174,5 @@ model.add(Dense(1))
 adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
 history = model.fit(X, y, batch_size=64, nb_epoch=10, validation_split=0.2)
-model.evaluate(X_test, y_test)
+evaluation = model.evaluate(X_test, y_test)
 model.save('model.h5')
