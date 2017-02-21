@@ -21,10 +21,10 @@ p_zeros_samples_to_exclude = 0.75
 p_near_zeros_samples_to_exclude = 0.75
 args = sys.argv
 if len(args) == 5:
-    side_adjustment = args[1]
-    angle_adjustment = args[2]
-    p_zeros_samples_to_exclude = args[3]
-    p_near_zeros_samples_to_exclude = args[4]
+    side_adjustment = float(args[1])
+    angle_adjustment = float(args[2])
+    p_zeros_samples_to_exclude = float(args[3])
+    p_near_zeros_samples_to_exclude = float(args[4])
 
 # check if running on local or remote
 if socket.gethostname() == parameters.local_hostname:
