@@ -15,9 +15,9 @@ import utils
 import parameters
 
 # hyperparameters
-side_adjustment = 0.15
-angle_adjustment = 0.075
-p_zeros_samples_to_exclude = 0.9
+side_adjustment = 0.20
+angle_adjustment = 0.10
+p_zeros_samples_to_exclude = 0.95
 p_near_zeros_samples_to_exclude = 0.75
 args = sys.argv
 if len(args) == 5:
