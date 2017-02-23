@@ -180,7 +180,7 @@ def generator(samples, batch_size=64):
                 flip = np.random.rand() > 0.5
                 image = utils.load_images([name], flip)
                 images.append(image)
-                angle = batch_sample[1]
+                angle = -batch_sample[1] if flip else batch_sample[1]
                 angles.append(angle)
             # trim image to only see section with road
             X = np.array(images)
