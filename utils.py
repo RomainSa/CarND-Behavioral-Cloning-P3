@@ -81,7 +81,10 @@ def load_images(paths, flip=False):
         if flip:
             x = x[:, ::-1, :]
         X.append(x)
-    X = np.array(X)
+    if len(X) > 1:
+        X = np.array(X)
+    else:
+        X = X[0]
     return X
 
 
