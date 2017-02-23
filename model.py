@@ -9,9 +9,8 @@ import sys
 import socket
 import os
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.stats import truncnorm
-from sklearn.utils import shuffle
+import sklearn
+from sklearn.model_selection import train_test_split
 import utils
 import parameters
 
@@ -88,13 +87,6 @@ else:
     y = y[center_images]
     speed = speed[center_images]
 
-# flips some data horizontally
-mask = (y != 0)
-speed = np.concatenate((speed, speed[mask]))
-paths = np.concatenate((paths, paths[mask]))
-flip = np.concatenate((np.repeat(False, y.shape[0]), np.repeat(True, mask.sum())))
-y = np.concatenate((y, -y[mask]))
-
 # exclude samples that are exactly or near 0
 if p_zeros_samples_to_exclude > 0 or p_near_zeros_samples_to_exclude:
     near_zeros_examples = np.where((np.abs(y) < 0.30) & (np.abs(y) > 0))[0]
@@ -106,29 +98,23 @@ if p_zeros_samples_to_exclude > 0 or p_near_zeros_samples_to_exclude:
     zeros_samples_to_exclude = np.random.choice(zeros_examples,
                                                 int(p_zeros_samples_to_exclude * zeros_examples.shape[0]),
                                                 False)
-    indexes = np.array([i for i in range(y.shape[0]) if (i not in zeros_samples_to_exclude and i not in near_zeros_samples_to_exclude)])
+    indexes = np.array([i for i in range(y.shape[0]) if (i not in zeros_samples_to_exclude
+                                                         and i not in near_zeros_samples_to_exclude)])
     speed = speed[indexes]
     paths = paths[indexes]
     y = y[indexes]
-    flip = flip[indexes]
 
-# load images data
-X = utils.load_images(paths)
-
-# flips it if needed
-X[flip] = X[flip][:, :, ::-1, :]
-
-# shuffle data
-X, y = shuffle(X, y)
+# split data into train / validation / test
+samples = [(p_, y_) for p_, y_ in zip(paths, y)]
+train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
 # test data
-X_test, y_test, paths_test, speed_test = utils.load_data(data_folder + 'track2/', return_images=True)
+_, y_test, paths_test, speed_test = utils.load_data(data_folder + 'track2/', return_images=False)
 mask = np.array([parameters.center_images_pattern in p for p in paths_test])
-X_test = X_test[mask]
 y_test = y_test[mask]
 paths_test = paths_test[mask]
 speed_test = speed_test[mask]
-
+test_samples = [(p_, y_) for p_, y_ in zip(paths_test, y_test)]
 
 """
 based on 'End to End Learning for Self-Driving Cars' by Nvidia
@@ -143,7 +129,7 @@ model.add(Cropping2D(cropping=((60, 25), (0, 0)), input_shape=(160, 320, 3)))
 model.add(Lambda(lambda x: (x / 255.0) - 0.5))
 
 # convolution layers
-model.add(Convolution2D(input_shape=(X.shape[1:]), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2),
+model.add(Convolution2D(input_shape=(160, 320, 3), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2),
                         border_mode='valid'))
 model.add(ELU())
 model.add(Dropout(0.50))
@@ -179,11 +165,39 @@ model.add(ELU())
 
 model.add(Dense(1))
 
+# data generators
+def generator(samples, batch_size=64):
+    num_samples = len(samples)
+    while True:
+        samples = sklearn.utils.shuffle(samples)
+        for offset in range(0, num_samples, batch_size):
+            batch_samples = samples[offset:offset+batch_size]
+            images = []
+            angles = []
+            for batch_sample in batch_samples:
+                name = batch_sample[0]
+                # randomly flip data
+                flip = np.random.rand() > 0.5
+                image = utils.load_images([name], flip)
+                images.append(image)
+                angle = batch_sample[1]
+                angles.append(angle)
+            # trim image to only see section with road
+            X = np.array(images)
+            y = np.array(angles)
+            yield X, y
+
+train_generator = generator(train_samples, batch_size=64)
+validation_generator = generator(validation_samples, batch_size=64)
+test_generator = generator(test_samples, batch_size=64)
+
 # compile, train and save the model
 adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
-history = model.fit(X, y, batch_size=64, nb_epoch=10, validation_split=0.2)
-evaluation = model.evaluate(X_test, y_test)
+model.fit_generator(train_generator, nb_epoch=10, samples_per_epoch=len(train_samples),
+                    validation_data=validation_generator, nb_val_samples=len(validation_samples))
+evaluation = model.evaluate_generator(test_generator, val_samples=len(test_samples))
 print('\nTest MSE: {}\n'.format(evaluation))
-model_name = 'model_SA' + str(side_adjustment) + '_AA' + str(angle_adjustment) + '_Z' + str(p_zeros_samples_to_exclude) + '_NZ' + str(p_near_zeros_samples_to_exclude)
+model_name = 'model_SA' + str(side_adjustment) + '_AA' + str(angle_adjustment) + '_Z' +\
+             str(p_zeros_samples_to_exclude) + '_NZ' + str(p_near_zeros_samples_to_exclude)
 model.save(model_name)

@@ -65,16 +65,21 @@ def change_brightness(img, brightness_change):
     return np.asarray(Image.fromarray(img2.astype(np.uint8), mode='YCbCr').convert('RGB'))
 
 
-def load_images(paths):
+def load_images(paths, flip=False):
     """
     Loads images given their paths and return a numpy array
     """
     X = []
+    if isinstance(paths, str):
+        paths = [paths]
     for img in paths:
         x = np.asarray(Image.open(img))
         # random brightness change
         brightness_change = np.random.randint(-50, +50)
         x = change_brightness(x, brightness_change)
+        # flip image
+        if flip:
+            x = x[:, ::-1, :]
         X.append(x)
     X = np.array(X)
     return X
