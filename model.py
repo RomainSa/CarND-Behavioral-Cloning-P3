@@ -158,7 +158,6 @@ model.add(Dropout(0.50))
 
 model.add(Dense(50))
 model.add(ELU())
-model.add(Dropout(0.50))
 
 model.add(Dense(10))
 model.add(ELU())
