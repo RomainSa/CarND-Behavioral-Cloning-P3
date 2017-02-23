@@ -165,13 +165,14 @@ model.add(ELU())
 
 model.add(Dense(1))
 
+
 # data generators
-def generator(samples, batch_size=64):
-    num_samples = len(samples)
+def generator(samples_, batch_size=64):
+    num_samples = len(samples_)
     while True:
-        samples = sklearn.utils.shuffle(samples)
+        samples_ = sklearn.utils.shuffle(samples_)
         for offset in range(0, num_samples, batch_size):
-            batch_samples = samples[offset:offset+batch_size]
+            batch_samples = samples_[offset:offset+batch_size]
             images = []
             angles = []
             for batch_sample in batch_samples:
@@ -183,9 +184,9 @@ def generator(samples, batch_size=64):
                 angle = -batch_sample[1] if flip else batch_sample[1]
                 angles.append(angle)
             # trim image to only see section with road
-            X = np.array(images)
-            y = np.array(angles)
-            yield X, y
+            X_ = np.array(images)
+            y_ = np.array(angles)
+            yield X_, y_
 
 train_generator = generator(train_samples, batch_size=64)
 validation_generator = generator(validation_samples, batch_size=64)
