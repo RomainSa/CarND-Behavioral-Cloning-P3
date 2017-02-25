@@ -129,8 +129,7 @@ model.add(Cropping2D(cropping=((60, 25), (0, 0)), input_shape=(160, 320, 3)))
 model.add(Lambda(lambda x: (x / 255.0) - 0.5))
 
 # convolution layers
-model.add(Convolution2D(input_shape=(160, 320, 3), nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2),
-                        border_mode='valid'))
+model.add(Convolution2D(nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
 model.add(ELU())
 model.add(Dropout(0.50))
 
