@@ -15,13 +15,11 @@ import utils
 import parameters
 
 # hyperparameters
-side_adjustment = 0.20
-angle_adjustment = 0.10
-p_zeros_samples_to_exclude = 0.95
-p_near_zeros_samples_to_exclude = 0.75
+angle_adjustment = 0.15
+p_zeros_samples_to_exclude = 0.50
+p_near_zeros_samples_to_exclude = 0.50
 args = sys.argv
-if len(args) == 5:
-    side_adjustment = float(args[1])
+if len(args) == 4:
     angle_adjustment = float(args[2])
     p_zeros_samples_to_exclude = float(args[3])
     p_near_zeros_samples_to_exclude = float(args[4])
@@ -48,17 +46,6 @@ for destination_folder, url in zip(parameters.data_folders_list, parameters.urls
     if not os.path.isdir(data_folder + destination_folder):
         utils.download_and_unzip(url, data_folder, destination_folder)
     _, y, paths, speed = utils.load_data(data_folder + destination_folder, return_images=False)
-    if 'recovering_from_left' in destination_folder.lower():
-        # for recovering from left data we only keep sharp right turns (center and left images)
-        min_angle = 0.10
-        mask = (y > min_angle)
-        speed = speed[mask]
-        paths = paths[mask]
-        y = y[mask]
-    if 'left_side_driving' in destination_folder.lower():
-        y += side_adjustment
-    if 'right_side_driving' in destination_folder.lower():
-        y -= side_adjustment
     speed_list.append(speed)
     paths_list.append(paths)
     y_list.append(y)
@@ -69,7 +56,7 @@ paths = np.concatenate(paths_list)
 y = np.concatenate(y_list)
 
 # remove low speed data
-min_speed = 20
+min_speed = 15
 mask = speed > min_speed
 paths = paths[mask]
 y = y[mask]
@@ -116,11 +103,10 @@ paths_test = paths_test[mask]
 speed_test = speed_test[mask]
 test_samples = [(p_, y_) for p_, y_ in zip(paths_test, y_test)]
 
-"""
-based on 'End to End Learning for Self-Driving Cars' by Nvidia
-"""
+# model based on 'End to End Learning for Self-Driving Cars' by Nvidia
 
 model = Sequential()
+dropout_rate = 0.50
 
 # cropping layer
 model.add(Cropping2D(cropping=((60, 25), (0, 0)), input_shape=(160, 320, 3)))
@@ -131,35 +117,37 @@ model.add(Lambda(lambda x: (x / 255.0) - 0.5))
 # convolution layers
 model.add(Convolution2D(nb_filter=24, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
 model.add(ELU())
-model.add(Dropout(0.50))
+model.add(Dropout(dropout_rate))
 
 model.add(Convolution2D(nb_filter=36, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
 model.add(ELU())
-model.add(Dropout(0.50))
+model.add(Dropout(dropout_rate))
 
 model.add(Convolution2D(nb_filter=48, nb_row=5, nb_col=5, subsample=(2, 2), border_mode='valid'))
 model.add(ELU())
-model.add(Dropout(0.50))
+model.add(Dropout(dropout_rate))
 
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
 model.add(ELU())
-model.add(Dropout(0.50))
+model.add(Dropout(dropout_rate))
 
 model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3, subsample=(1, 1), border_mode='valid'))
 model.add(ELU())
-model.add(Dropout(0.50))
+model.add(Dropout(dropout_rate))
 
 # fully connected layers
 model.add(Flatten())
 model.add(Dense(100))
 model.add(ELU())
-model.add(Dropout(0.50))
+model.add(Dropout(dropout_rate))
 
 model.add(Dense(50))
 model.add(ELU())
+model.add(Dropout(dropout_rate))
 
 model.add(Dense(10))
 model.add(ELU())
+model.add(Dropout(dropout_rate))
 
 model.add(Dense(1))
 
@@ -191,12 +179,10 @@ validation_generator = generator(validation_samples, batch_size=64)
 test_generator = generator(test_samples, batch_size=64)
 
 # compile, train and save the model
-adam_ = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+adam_ = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 model.compile(optimizer=adam_, loss='mean_squared_error')
-model.fit_generator(train_generator, nb_epoch=10, samples_per_epoch=len(train_samples),
+model.fit_generator(train_generator, nb_epoch=20, samples_per_epoch=len(train_samples),
                     validation_data=validation_generator, nb_val_samples=len(validation_samples))
 evaluation = model.evaluate_generator(test_generator, val_samples=len(test_samples))
 print('\nTest MSE: {}\n'.format(evaluation))
-model_name = 'model_SA' + str(side_adjustment) + '_AA' + str(angle_adjustment) + '_Z' +\
-             str(p_zeros_samples_to_exclude) + '_NZ' + str(p_near_zeros_samples_to_exclude)
-model.save(model_name)
+model.save('model.h5')
