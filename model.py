@@ -128,11 +128,11 @@ model.add(Dropout(dropout_rate))
 
 # fully connected layers
 model.add(Flatten())
-model.add(Dense(1164))
+model.add(Dense(100))
 model.add(ELU())
 model.add(Dropout(dropout_rate))
 
-model.add(Dense(100))
+model.add(Dense(50))
 model.add(ELU())
 model.add(Dropout(dropout_rate))
 
