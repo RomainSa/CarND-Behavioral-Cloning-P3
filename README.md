@@ -113,3 +113,87 @@ The video will run at 48 FPS. The default FPS is 60.
 
 1. It's been noted the simulator might perform differently based on the hardware. So if your model drives succesfully on your machine it might not on another machine (your reviewer). Saving a video is a solid backup in case this happens.
 2. You could slightly alter the code in `drive.py` and/or `video.py` to create a video of what your model sees after the image is processed (may be helpful for debugging).
+
+###Model Architecture and Training Strategy
+
+####1. Solution Design Approach
+
+The overall strategy for deriving a model architecture was to start from [Nvidia's model](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf).
+I thought this model might be appropriate because in the paper, the author use an analog strategy to drive a car using only images as inputs.
+
+In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set.
+One of the parameters that was crucial to change was the initial learning rate of the Adam optimizer.
+I noticed that it was necessary to use a low starting learning rate (10-3). 
+
+Another important step was to flip the data in order to add more images.
+
+I also ended up reduced the number of neurons in the fully connected layers compared to Nvidia's fully connected layers (1164, 100 and 10 neurons respectively).
+
+At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
+
+####2. Final Model Architecture
+
+The final model architecture (model.py lines 99-143) is based on Nvidia's paper: [End to end learning for self driving cars](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)
+
+It consists of the following layers:
+
+| Layer           | Details                                            |
+|-----------------|----------------------------------------------------|
+| Input           | 160x320 RGB image                                  |
+| Cropping        | 60 pixels on top, 25 pixels on bottom (first axis) |
+| Normalization   | so that each data point is between -0.5 and +0.5   |
+| Convolution     | 24 filters, 5x5 kernel                             |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Convolution     | 36 filters, 5x5 kernel                             |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Convolution     | 48 filters, 5x5 kernel                             |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Convolution     | 64 filters, 3x3 kernel                             |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Convolution     | 64 filters, 3x3 kernel                             |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Fully connected | 100 neurons                                        |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Fully connected | 50 neurons                                         |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Fully connected | 10 neurons                                         |
+| Activation      | ELU                                                |
+| Dropout         | 50% of neurons are zeroed                          |
+| Output          | scalar                                             |
+
+As we can see, the model includes ELU layers to introduce nonlinearity and dropout to reduce overfitting.
+
+Here is a visualization of Nvidia's model architecture:
+![alt text][nvidia_architecture]
+
+####3. Creation of the Training Set & Training Process
+
+I have made several attemps to create my own datasets using my mouse to steer the car.
+Yet, the models trained using this data where not as good as those trained using udacity data.
+In the end, I ended up using only Udacity's dataset.
+
+This dataset consist of 
+Here is an example image of center lane driving:
+
+![alt text][image1]
+
+To augment the data sat, I also flipped images and angles thinking that this would reduce bias by making the steering distribution.
+
+After the collection process, I had X number of data points.
+I then preprocessed this data by cropping 60 pixels at the top of the image and 25 pixels at the bottom. The goal of this cropping was to 
+prevent the model from overfitting by learning from the sky or trees for example.
+
+I finally randomly shuffled the data set and put 10% of the data into a validation set and 10% in a test set. 
+
+I used this training data for training the model.
+The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 20.
+I used an adam optimizer so that manually training the learning rate wasn't necessary.
+
+
