@@ -24,17 +24,8 @@ if len(args) == 4:
     p_zeros_samples_to_exclude = float(args[3])
     p_near_zeros_samples_to_exclude = float(args[4])
 
-# check if running on local or remote
-if socket.gethostname() == parameters.local_hostname:
-    remote = False
-else:
-    remote = True
-
-# get corresponding data directory
-if remote:
-    data_folder = parameters.remote_data_folder
-else:
-    data_folder = parameters.local_data_folder
+# create data folder if needed
+data_folder = parameters.data_folder
 if not os.path.isdir(data_folder):
     os.mkdir(data_folder)
 

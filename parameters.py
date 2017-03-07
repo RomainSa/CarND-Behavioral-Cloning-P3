@@ -4,9 +4,8 @@ import numpy as np
 local_hostname = 'MacBook-Pro-de-Romain.local'
 
 # folders
-local_data_folder = '/Users/roms/GitHub/SDCND_T1_Simulator/data/'
-remote_data_folder = '/home/carnddata/'
-data_folders_list = ['udacity/']
+data_folder = '/Users/roms/GitHub/SDCND_T1_Simulator/data/'
+data_folders_list = ['data/']
 default_images_folder = 'IMG/'
 
 # file names
