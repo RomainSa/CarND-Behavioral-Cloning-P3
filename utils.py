@@ -4,8 +4,6 @@ import zipfile
 import numpy as np
 from PIL import Image
 import parameters
-from matplotlib import pyplot as plt
-from PIL.ImageEnhance import Brightness
 
 
 def download_and_unzip(url, extraction_folder, extracted_folder_name):
@@ -87,22 +85,3 @@ def load_images(paths, flip=False, change_brightness=False):
     else:
         X = X[0]
     return X
-
-
-def visualize(path, angle=None, camera=None):
-    """
-    Given an image path, plot it along with its angle
-    """
-    if camera == 'center':
-        path = path.replace(parameters.left_images_pattern, parameters.center_images_pattern)
-        path = path.replace(parameters.right_images_pattern, parameters.center_images_pattern)
-    if camera == 'left':
-        path = path.replace(parameters.center_images_pattern, parameters.left_images_pattern)
-        path = path.replace(parameters.right_images_pattern, parameters.left_images_pattern)
-    if camera == 'right':
-        path = path.replace(parameters.center_images_pattern, parameters.right_images_pattern)
-        path = path.replace(parameters.left_images_pattern, parameters.right_images_pattern)
-    x = load_images([path])
-    plt.imshow(x[0])
-    if angle is not None:
-        plt.title(angle)
