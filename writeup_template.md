@@ -80,10 +80,6 @@ For details about how I created the training data, see the next section.
 
 ###Model Architecture and Training Strategy
 
-Is the solution design documented?
-Is the model architecture documented?
-Is the creation of the training dataset and training process documented?
-
 ####1. Solution Design Approach
 
 The overall strategy for deriving a model architecture was to start from [Nvidia's model](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf).
@@ -101,7 +97,7 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 
 ####2. Final Model Architecture
 
-The final model architecture (model.py lines ???) is based on Nvidia's paper: [End to end learning for self driving cars](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)
+The final model architecture (model.py lines 99-143) is based on Nvidia's paper: [End to end learning for self driving cars](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)
 
 It consists of the following layers:
 
